@@ -17,10 +17,14 @@
 
 #define MAX(a,b) (a>b) ? a : b
 #define MIN(a,b) (a<b) ? a : b
+#define ABS(a) (a>=0) ? a : (-1*a)
 
 
 #define TEX_SIZE 512
 GLuint texture;
+
+int t = 0;
+int dt = 1;
 
 typedef struct {
     GLubyte r;
@@ -75,18 +79,32 @@ void loadAlphaLayers(){
 void generateAlphaImage(){
     int x,y;
     float a;
+    pixelAlpha temp_layer[TEX_SIZE][TEX_SIZE];
+
+    //C+B layer
     for(x=0;x<TEX_SIZE;x++){
       for(y=0;y<TEX_SIZE;y++){
-        a = colorToFloat(b_layer[x][y].a);
-        image[x][y].r = b_layer[x][y].r + (1-a)*image[x][y].r;
-        image[x][y].g = b_layer[x][y].g + (1-a)*image[x][y].g;
-        image[x][y].b = b_layer[x][y].b + (1-a)*image[x][y].b;
+          a = colorToFloat(b_layer[x][((y-t) + TEX_SIZE) % TEX_SIZE].a);
+          temp_layer[x][y].r = b_layer[x][((y-t) + TEX_SIZE) % TEX_SIZE].r * a + (1-a)*source[x][y].r * 1;
+          temp_layer[x][y].g = b_layer[x][((y-t) + TEX_SIZE) % TEX_SIZE].g * a + (1-a)*source[x][y].g * 1;
+          temp_layer[x][y].b = b_layer[x][((y-t) + TEX_SIZE) % TEX_SIZE].b * a + (1-a)*source[x][y].b * 1;
+          temp_layer[x][y].a = a + (1-a)*1;
       }
-
     }
+
+    //+A layer
+    for(x=0;x<TEX_SIZE;x++){
+      for(y=0;y<TEX_SIZE;y++){
+        a = colorToFloat(a_layer[x][y].a);
+        image[x][y].r = a_layer[x][y].r *a + (1-a)*temp_layer[x][y].r * temp_layer[x][y].a;
+        image[x][y].g = a_layer[x][y].g *a + (1-a)*temp_layer[x][y].g * temp_layer[x][y].a;
+        image[x][y].b = a_layer[x][y].b *a + (1-a)*temp_layer[x][y].b * temp_layer[x][y].a;
+      }
+    }
+
 }
 
-short loadImageFromFile(){
+short loadImageFromFileToSource(){
     int x,y;
     FILE *fimage;
     fimage = fopen("C:\\Users\\Jakub\\Dropbox\\5. sem\\PPGSO\\party.rgb","rb");            // b - cita ako binarny subor, defaultne ako textovy
@@ -110,7 +128,8 @@ short loadImageFromFile(){
 }
 
 void loadFromFiles(){
-    loadImageFromFile();
+    loadImageFromFileToSource();
+    memcpy(image,source,sizeof(image));
     loadAlphaLayers();
 }
 
@@ -127,7 +146,7 @@ void convoltionFilter(int *kernel,int m,int n,int div,float bias){
                 for(j=0;j<n;j++){
                     imageX = x - (m/2) + i;
                     imageY = y - (n/2) + j;
-                    if(checkOutOfImage(imageX,imageY)){
+                    if(checkRange(imageX,imageY)){
                         r = colorToFloat(source[imageX][imageY].r);
                         g = colorToFloat(source[imageX][imageY].g);
                         b = colorToFloat(source[imageX][imageY].b);
@@ -143,9 +162,9 @@ void convoltionFilter(int *kernel,int m,int n,int div,float bias){
                 }
             }
 
-               image[x][y].r = MIN((clump(sum_r/div)*255)+bias,255);
-               image[x][y].g = MIN((clump(sum_g/div)*255)+bias,255);
-               image[x][y].b = MIN((clump(sum_b/div)*255)+bias,255);
+               image[x][y].r = clump((sum_r/div)+bias) * 255;
+               image[x][y].g = clump((sum_g/div)+bias) * 255;
+               image[x][y].b = clump((sum_b/div)+bias) * 255;
         }
     }
 }
@@ -167,7 +186,7 @@ void GenerateImage() {
 
 
 
-int checkOutOfImage(int row, int col){
+int checkRange(int row, int col){
    if ( row>=0 && row<TEX_SIZE && col>=0 && col<TEX_SIZE ) return 1;
    else return 0;
 }
@@ -194,19 +213,18 @@ void init() {
     //File readers
     loadFromFiles();
 
-    if (image) {
-        memcpy(image,source,sizeof(image));
-    }else{
+    if (!image) {
         GenerateImage();
     }
 
-    generateAlphaImage();
+    //generateAlphaImage();
 }
 
 // Generate and display the image.
 void display() {
     // Call user image generation
     //GenerateImage();                      !!
+    //generateAlphaImage();
     // Copy image to texture memory
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEX_SIZE, TEX_SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
@@ -231,7 +249,7 @@ void keyboardEvents(unsigned char key, int x, int y){
         {int emboss[][3] = {    {-2,-1,0},
                                 {-1,0,1},
                                 {0,1,2}     };
-        convoltionFilter((int *) emboss,3,3,1,128.0);
+        convoltionFilter((int *) emboss,3,3,1,0.5f);
         }break;
 
       case 'n' : case 'N' :
@@ -243,7 +261,7 @@ void keyboardEvents(unsigned char key, int x, int y){
           int sharpen[][3] = {  {-1,-1,-1},
                                 {-1,9,-1},
                                 {-1,-1,-1}  };
-          convoltionFilter((int *) sharpen,3,3,1,0);
+          convoltionFilter((int *) sharpen,3,3,1,0.0f);
         }
         break;
 
@@ -252,9 +270,18 @@ void keyboardEvents(unsigned char key, int x, int y){
           int blur[][3] = { {1,2,1},
                             {2,4,2},
                             {1,2,1} };
-          convoltionFilter((int *) blur,3,3,16,0);
+          convoltionFilter((int *) blur,3,3,16,0.0f);
         }
         break;
+
+      case 54 :         //right
+        dt +=1;
+        break;
+
+      case 52 :         //left
+        dt -=1;
+        break;
+
 
       case 'q' : case 27 :
         exit(EXIT_SUCCESS);
@@ -262,6 +289,13 @@ void keyboardEvents(unsigned char key, int x, int y){
 
     }
 
+}
+
+void update() {
+  t += dt;
+  t = t % TEX_SIZE;
+  printf("%d\n",t);
+  glutPostRedisplay();
 }
 
 
@@ -277,6 +311,7 @@ int main(int argc, char ** argv) {
     // Run the control loop
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboardEvents);
+    glutIdleFunc(update);
     glutMainLoop();
     return EXIT_SUCCESS;
 }
