@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="gradient" />
+	<File name="gl_gradient.c" open="1" top="1" tabpos="1">
+		<Cursor position="2269" topLine="83" />
+	</File>
+	<File name="gl_light.c" open="0" top="0" tabpos="0">
+		<Cursor position="313" topLine="18" />
+	</File>
+	<File name="gl_projection.c" open="0" top="0" tabpos="2">
+		<Cursor position="400" topLine="15" />
+	</File>
+	<File name="gl_transformation.c" open="1" top="0" tabpos="2">
+		<Cursor position="530" topLine="18" />
+	</File>
+	<File name="gl_vbo.c" open="0" top="0" tabpos="2">
+		<Cursor position="864" topLine="3" />
+	</File>
+</CodeBlocks_layout_file>

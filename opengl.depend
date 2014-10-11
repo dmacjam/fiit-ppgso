@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1390274528 source:c:\work\papp-master\examples\opengl\gl_vbo.c
+	<stdio.h>
+	<stdlib.h>
+	<memory.h>
+	<math.h>
+	<GLUT/glut.h>
+	<GL/glew.h>
+	<GL/freeglut.h>
+	<GL/freeglut_ext.h>
+
+1413018891 source:c:\work\papp-master\examples\opengl\gl_gradient.c
+	<stdio.h>
+	<stdlib.h>
+	<GLUT/glut.h>
+	<GL/freeglut.h>
+	<GL/freeglut_ext.h>
+
