@@ -9,9 +9,10 @@
 	<GL/freeglut.h>
 	<GL/freeglut_ext.h>
 
-1413030243 source:c:\work\papp-master\examples\opengl\gl_gradient.c
+1413238039 source:c:\work\papp-master\examples\opengl\gl_gradient.c
 	<stdio.h>
 	<stdlib.h>
+	<math.h>
 	<GLUT/glut.h>
 	<GL/freeglut.h>
 	<GL/freeglut_ext.h>
